@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplicaciones Sobel</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+            margin: 10px;
+        }
+        #results {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .resultado {
+            margin-right: 20px;
+            text-align: center;
+        }
+        /* Agregamos estilo para ajustar el tamaño */
+        .resultado canvas {
+            width: 100px; /* Cambiar el tamaño del canvas aquí */
+            height: auto; /* Mantener la proporción */
+        }
+    </style>
+</head>
+<body>
+    <h1>20 formas de Sobel</h1>
+    <canvas id="canvas"></canvas>
+    <div id="results"></div>
+
+    <script type="text/javascript">
+        var image = new Image();
+        image.onload = imageLoaded;
+        image.src = "anime.jpeg";
+
+        function imageLoaded() {
+            var canvas = document.getElementById("canvas");
+            var ctx = canvas.getContext("2d");
+
+            canvas.width = image.width;
+            canvas.height = image.height;
+
+            ctx.drawImage(image, 0, 0, image.width, image.height);
+
+            blancoNegro(canvas);
+
+            var resultados = document.getElementById("results");
+            
+            // Define todos los filtros con nombres
+            var filtros = [
+                {
+                    nombre: "Sobel Vertical",
+                    filtro: [
+                        [-1, 0, 1],
+                        [-2, 0, 2],
+                        [-1, 0, 1]
+                    ]
+                },
+                {
+                    nombre: "Sobel Horizontal",
+                    filtro: [
+                        [-1, -2, -1],
+                        [0, 0, 0],
+                        [1, 2, 1]
+                    ]
+                },
+                {
+                    nombre: "Diagonal Principal",
+                    filtro: [
+                        [0, 1, 2],
+                        [-1, 0, 1],
+                        [-2, -1, 0]
+                    ]
+                },
+                {
+                    nombre: "Diagonal Secundaria",
+                    filtro: [
+                        [-2, -1, 0],
+                        [-1, 0, 1],
+                        [0, 1, 2]
+                    ]
+                },
+                {
+                    nombre: "Diagonal Rotada 45°",
+                    filtro: [
+                        [0, 1, 2],
+                        [-1, 0, 1],
+                        [-2, -1, 0]
+                    ]
+                },
+                {
+                    nombre: "Diagonal Rotada 135°",
+                    filtro: [
+                        [-2, -1, 0],
+                        [-1, 0, 1],
+                        [0, 1, 2]
+                    ]
+                },
+                {
+                    nombre: "Bordes Diagonales Principal",
+                    filtro: [
+                        [1, 0, -1],
+                        [0, 0, 0],
+                        [-1, 0, 1]
+                    ]
+                },
+                {
+                    nombre: "Bordes Diagonales Secundario",
+                    filtro: [
+                        [0, -1, 0],
+                        [-1, 4, -1],
+                        [0, -1, 0]
+                    ]
+                },
+                {
+                    nombre: "Bordes en Cruz",
+                    filtro: [
+                        [1, 1, 1],
+                        [1, -7, 1],
+                        [1, 1, 1]
+                    ]
+                },
+                {
+                    nombre: "Diferencias Diagonales",
+                    filtro: [
+                        [-1, 0, 1],
+                        [0, 0, 0],
+                        [1, 0, -1]
+                    ]
+                },
+                {
+                    nombre: "Bordes Agudos Horizontales",
+                    filtro: [
+                        [0, 1, 0],
+                        [-1, -4, 1],
+                        [0, 1, 0]
+                    ]
+                },
+                {
+                    nombre: "Bordes Agudos Verticales",
+                    filtro: [
+                        [1, 0, -1],
+                        [0, -4, 0],
+                        [-1, 0, 1]
+                    ]
+                },
+                {
+                    nombre: "Límite de Bordes Verticales",
+                    filtro: [
+                        [0, -1, 0],
+                        [1, 4, -1],
+                        [0, -1, 0]
+                    ]
+                },
+                {
+                    nombre: "Límite de Bordes Horizontales",
+                    filtro: [
+                        [-1, 0, 1],
+                        [0, 4, 0],
+                        [1, 0, -1]
+                    ]
+                },
+                {
+                    nombre: "Bordes en Cuadrado",
+                    filtro: [
+                        [-1, -1, -1],
+                        [-1, 8, -1],
+                        [-1, -1, -1]
+                    ]
+                },
+                {
+                    nombre: "Bordes Diagonales Agudos",
+                    filtro: [
+                        [2, 1, 0],
+                        [1, 0, -1],
+                        [0, -1, -2]
+                    ]
+                },
+                {
+                    nombre: "Bordes Diagonales Sutil",
+                    filtro: [
+                        [-1, 0, 1],
+                        [0, 0, 0],
+                        [1, 0, -1]
+                    ]
+                },
+                {
+                    nombre: "Bordes en Cruz Alternativo",
+                    filtro: [
+                        [1, 1, 1],
+                        [1, -8, 1],
+                        [1, 1, 1]
+                    ]
+                },
+                {
+                    nombre: "Imagen de Grano",
+                    filtro: [
+                        [1, 1, 1],
+                        [1, -7, 1],
+                        [1, 1, 1]
+                    ]
+                },
+                {
+                    nombre: "Bordes Medios",
+                    filtro: [
+                        [0, 1, 0],
+                        [1, -4, 1],
+                        [0, 1, 0]
+                    ]
+                }
+            ];
+
+            // Aplicar cada filtro
+            filtros.forEach((filtroObj, index) => {
+                var resultado = document.createElement("canvas");
+                resultado.width = canvas.width;
+                resultado.height = canvas.height;
+                resultados.appendChild(resultado);
+                
+                convolucionar(canvas, resultado, filtroObj.filtro);
+                
+                // Eliminar la etiqueta del nombre del filtro
+                // var etiqueta = document.createElement("p");
+                // etiqueta.textContent = filtroObj.nombre;
+                // resultados.appendChild(etiqueta);
+            });
+        }
+
+        function blancoNegro(canvas) {
+            var ctx = canvas.getContext("2d");
+            var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            var pixeles = imgData.data;
+
+            for (var p = 0; p < pixeles.length; p += 4) {
+                var rojo = pixeles[p];
+                var verde = pixeles[p + 1];
+                var azul = pixeles[p + 2];
+
+                var gris = (rojo + verde + azul) / 3;
+
+                pixeles[p] = gris;
+                pixeles[p + 1] = gris;
+                pixeles[p + 2] = gris;
+            }
+            ctx.putImageData(imgData, 0, 0);
+        }
+
+        function convolucionar(canvasFuente, canvasDestino, filtro) {
+            var ctxFuente = canvasFuente.getContext("2d");
+            var imgDataFuente = ctxFuente.getImageData(0, 0, canvasFuente.width, canvasFuente.height);
+            var pixelesFuente = imgDataFuente.data;
+
+            canvasDestino.width = canvasFuente.width;
+            canvasDestino.height = canvasFuente.height;
+
+            var ctxDestino = canvasDestino.getContext("2d");
+            var imgDataDestino = ctxDestino.getImageData(0, 0, canvasDestino.width, canvasDestino.height);
+            var pixelesDestino = imgDataDestino.data;
+
+            for (var y = 1; y < canvasFuente.height - 1; y++) {
+                for (var x = 1; x < canvasFuente.width - 1; x++) {
+                    var idx = ((y * canvasFuente.width) + x) * 4;
+
+                    var total = 0;
+
+                    for (var kernelY = 0; kernelY < 3; kernelY++) {
+                        for (var kernelX = 0; kernelX < 3; kernelX++) {
+                            var pixelIdx = (((y + (kernelY - 1)) * canvasFuente.width) + (x + (kernelX - 1))) * 4;
+                            var pixelValue = pixelesFuente[pixelIdx]; // Valor en escala de grises
+
+                            total += filtro[kernelY][kernelX] * pixelValue;
+                        }
+                    }
+
+                    var mag = Math.abs(total);
+                    mag = (mag < 100) ? 0 : mag;
+
+                    pixelesDestino[idx] = mag;
+                    pixelesDestino[idx + 1] = mag;
+                    pixelesDestino[idx + 2] = mag;
+                    pixelesDestino[idx + 3] = 255;
+                }
+            }
+
+            ctxDestino.putImageData(imgDataDestino, 0, 0);
+        }
+    </script>
+</body>
+</html>
